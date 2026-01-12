@@ -1,11 +1,14 @@
 from typing import Optional
-from fastapi import FastAPI, Response, HTTPException, status
+from fastapi import FastAPI, Response, HTTPException, status, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from sqlalchemy.orm import Session
+from . import models
+from .database import engine, get_db
 
 app= FastAPI()
 
@@ -13,6 +16,11 @@ app= FastAPI()
 # proj\Scripts\activate.bat
 
 # for running - uvicorn app.main:app --reload
+
+
+#Create the database tables
+models.Base.metadata.create_all(bind=engine) #creates the tables in the database
+
 
 class Post(BaseModel):
     title: str
@@ -39,6 +47,10 @@ while True:
 @app.get("/")
 def root():
     return {"Hello, World!"} 
+
+@app.get("/sqlalchemy")
+def test_posts(db: Session = Depends(get_db)): #db session is passed to the function using dependency injection, what does dession do here? ans- it provides a database session to the function, what does depends do here? ans- it is used to declare dependencies for the function, which means that the function will receive the database session as an argument, how is this dependency injected? ans- it is injected by FastAPI when the function is called which means that FastAPI will call the get_db function to get a database session and pass it to the test_posts function
+    return {"status": "success"}
 
 @app.get("/posts")
 def get_posts():
